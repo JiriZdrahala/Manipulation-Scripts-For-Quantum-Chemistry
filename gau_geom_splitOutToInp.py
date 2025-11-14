@@ -15,4 +15,4 @@ while(len(mol)>0):
 pass
 
 filenameInp=sys.argv[2]
-WriteGeomsToInput(filenameInp,"GEOM",[mols[0]])
+WriteGeomsToInput(filenameInp,"GEOM",mols)
