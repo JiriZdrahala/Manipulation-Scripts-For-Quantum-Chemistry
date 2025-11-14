@@ -3,6 +3,7 @@ __all__=["elements","masses","Atom"]
 
 
 import numpy as np
+import numpy.typing as npt
 
 elements = [ 'H','He','Li','Be','B','C','N','O','F','Ne', \
              'Na','Mg','Al','Si','P','S','Cl','Ar', \
@@ -38,8 +39,8 @@ masses=[1.00784,4.003,\
 
 
 class Atom:
-    el=0
-    r=[-9000,-9000,-9000]
+    el : int
+    r : npt.NDArray
     
     def __init__(self,el,r):
         if(isinstance(el,str)):
@@ -51,13 +52,16 @@ class Atom:
                 else:
                     el=el[0].upper()
                 self.el=elements.index(el)+1
-        self.el=el
+        else:
+            self.el=el
+        
         if(len(r)>3):raise Exception("ERROR: R is too long, len: "+str(len(r)))
         if(isinstance(r[0],str)):
-            self.r=[]
-            self.r.append(float(r[0]))
-            self.r.append(float(r[1]))
-            self.r.append(float(r[2]))
+            arr=[]
+            arr.append(float(r[0]))
+            arr.append(float(r[1]))
+            arr.append(float(r[2]))
+            self.r=np.array(arr)
         else:
-            self.r=r
-        self.r=np.array(self.r)
+            self.r=np.array(r)
+        #self.r=np.array(self.r)
