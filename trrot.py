@@ -64,8 +64,8 @@ class Atom:
         
 def StrTup_2_NPArray(tup:str)->npt.NDArray:
     ls=tup.split(',')
-    ls[0]=ls[0].removeprefix('(')
-    ls[2]=ls[2].removesuffix(')')
+    ls[0]=ls[0].removeprefix('[')
+    ls[2]=ls[2].removesuffix(']')
     ls=np.array(list(map(float,ls)))
     return ls
 
