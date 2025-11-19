@@ -12,9 +12,11 @@ def isMultiplicityStatement(input_text):
 
 def WriteGeomsToInput(filenameInp:str,filenameNew:str, mols : list[Atom]):
     inp=open(filenameInp,'r')
+    (molInp,a,b)=ReadGeom_Input(filenameInp)
     inp_lines=inp.readlines() #gonna reuse them, might as well avoid I/O
     
     i=0
+    skipp=len(molInp)
     for mol in mols:
         i+=1
         filenew = open(filenameNew+'_'+str(i)+'.inp','w')
@@ -27,7 +29,7 @@ def WriteGeomsToInput(filenameInp:str,filenameNew:str, mols : list[Atom]):
                 filenew.write(inp_line)
                 for at in mol:
                     filenew.write("{:>2s} {:>15.8f} {:>15.8f} {:>15.8f} \n".format(elements[at.el-1],at.r[0],at.r[1],at.r[2]))
-                skip=len(mol)
+                skip=skipp
             else:
                 filenew.write(inp_line)
         filenew.close()
