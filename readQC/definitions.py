@@ -45,7 +45,7 @@ class Atom:
     def __init__(self,el,r):
         if(isinstance(el,str)):
             try:
-                el=int(el)
+                self.el=int(el)
             except:
                 if(len(el)>1):
                     el=el[0].upper()+el[1].lower()

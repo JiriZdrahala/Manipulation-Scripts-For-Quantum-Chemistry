@@ -10,7 +10,7 @@ def isMultiplicityStatement(input_text):
     pattern = re.compile(r"([+-]?(?=\.\d|\d)(?:\d+)?(?:\.?\d*))(?:[Ee]([+-]?\d+))?\s[0-9]+", re.IGNORECASE)
     return pattern.match(input_text)
 
-def WriteGeomsToInput(filenameInp:str,filenameNew:str, mols : list[Atom]):
+def WriteGeomsToInput(filenameInp:str,filenameNew:str, mols : list[list[Atom]]):
     inp=open(filenameInp,'r')
     (molInp,a,b)=ReadGeom_Input(filenameInp)
     inp_lines=inp.readlines() #gonna reuse them, might as well avoid I/O
