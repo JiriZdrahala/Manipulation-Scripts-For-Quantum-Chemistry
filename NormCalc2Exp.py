@@ -11,7 +11,7 @@ def MultPRN(PRN_Arr,num):
 def Integrate(PRN):
     integral=0
     for i in range(1,len(PRN)):
-        integral += abs(PRN[i][1])*(PRN[i][0]-PRN[i-1][0])
+        integral += (abs(PRN[i][1])+abs(PRN[i-1][1]))*(PRN[i][0]-PRN[i-1][0])/2.0
     
     return integral
 
@@ -72,8 +72,8 @@ CalcPRN_tup=PRNLines2Lists(CalcPRN,fromW,toW)
 CalcPRN=np.array(CalcPRN_tup[0])
 CalcPRN_fromW=CalcPRN_tup[1]
 CalcPRN_toW=CalcPRN_tup[2]
-CalcPRN_Slice=CalcPRN[CalcPRN_fromW:CalcPRN_toW]
-CalcPRN_Int=Integrate(CalcPRN_Slice)
+#CalcPRN_Slice=CalcPRN[CalcPRN_fromW:CalcPRN_toW]
+CalcPRN_Int=Integrate(CalcPRN)
 MultPRN(CalcPRN,ExpPRN_int/CalcPRN_Int)
 #MultPRN(CalcPRN,)
 
@@ -90,7 +90,13 @@ CalcPRNChiro_Int=Integrate(CalcPRNChiro_Slice)
 MultPRN(CalcPRNChiro,ExpPRN_int/CalcPRN_Int)
 #MultPRN(CalcPRNChiro,)
 
-
+try:
+    idx=CalcPRNFileName.lower().index('.prn')
+    CalcPRNFileName=CalcPRNFileName[:idx]+'_scaledToExp'+CalcPRNFileName[idx:]
+    CalcPRNChiroFileName=CalcPRNChiroFileName[:idx]+'_scaledToExp'+CalcPRNChiroFileName[idx:]  
+except(ValueError):
+    idx=-1
+    
 filee=open(CalcPRNFileName,'w')
 for i in range(len(CalcPRN)):
     filee.write("{:.6f}   {:.6f}\n".format(CalcPRN[i][0],CalcPRN[i][1]))
