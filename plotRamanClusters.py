@@ -69,7 +69,7 @@ def plot_ecd_spectra(exp_file, calc_file, ssimil1, calc_file_cluster, ssimil2,is
 
     for ax in [ax1, ax2, ax3]:
         ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=3, prune="both"))
-        
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(forward_scaled_format))
         
     

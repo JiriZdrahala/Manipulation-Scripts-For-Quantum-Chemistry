@@ -91,8 +91,9 @@ MultPRN(CalcPRNChiro,ExpPRN_int/CalcPRN_Int)
 #MultPRN(CalcPRNChiro,)
 
 try:
-    idx=CalcPRNFileName.lower().index('.prn')
+    idx=CalcPRNFileName.lower().rindex('.prn')
     CalcPRNFileName=CalcPRNFileName[:idx]+'_scaledToExp'+CalcPRNFileName[idx:]
+    idx=CalcPRNChiroFileName.lower().rindex('.prn')
     CalcPRNChiroFileName=CalcPRNChiroFileName[:idx]+'_scaledToExp'+CalcPRNChiroFileName[idx:]  
 except(ValueError):
     idx=-1
