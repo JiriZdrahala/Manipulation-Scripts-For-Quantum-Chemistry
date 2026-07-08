@@ -34,7 +34,7 @@ def set_dynamic_ylim(ax, x, y, x_min, x_max, isRoa=False, pad=0.025):
         ax.set_ylim(y_min - pad * y_range, y_max + pad * y_range)
 
 def plot_multi_excitation_spectra(
-    exp_file, calc_files_dict, output_image="multi_spectra_stack.png",xlim=[200,2000],isRoa=False
+     calc_files_dict, output_image="multi_spectra_stack.png",xlim=[200,2000],isRoa=False
 ):
     """Plots experimental spectrum on top, and an arbitrary number of calculated
 
@@ -45,15 +45,10 @@ def plot_multi_excitation_spectra(
     - calc_files_dict: Dict of {"Label/Wavelength": "path_to_file.txt"}
     """
     # 1. Load Experimental Data
-    try:
-        x_exp, y_exp = load_spectrum_data(exp_file)
-    except Exception as e:
-        print(f"Error loading experimental file: {e}")
-        return
     cmap = mpl.colormaps.get_cmap("tab10")
     # Count how many total subplots we need (1 experimental + N calculated)
     num_calc = len(calc_files_dict)
-    total_plots = 1 + num_calc
+    total_plots = num_calc
 
     # Dynamically scale the figure height based on the number of files
     # 5 inches wide, 2 inches of height per stacked spectrum feels balanced
@@ -71,40 +66,6 @@ def plot_multi_excitation_spectra(
     if total_plots == 1:
         axes = [axes]
 
-    # --- STEP 2: Determine global scientific notation exponent from Experimental ---
-    max_val = np.max(np.abs(y_exp))
-    exponent = int(np.floor(np.log10(max_val)))
-
-    # Formatting function for uniform 1-decimal place mapping
-    def forward_scaled_format(x, pos):
-        scaled_value = x / (10**exponent)
-        return f"{scaled_value:.1f}"
-
-    # --- STEP 3: Plot Experimental (Top Graph) ---
-    ax_top = axes[0]
-    ax_top.plot(
-        x_exp, y_exp, color="black", linestyle="-", linewidth=1.2, label="Exp"
-    )
-    # if(isRoa):
-    #     ax_top.set_ylabel(r"$\mathit{\Delta I}$ (arb. u.)")
-    # else:
-    #     ax_top.set_ylabel(r"$\mathit{I}$ (arb. u.)")
-
-    #ax_top.set_ylabel(r"$\mathit{I}$ (arb. u.)", style="italic")
-    ax_top.legend(loc="upper right", fontsize=9, frameon=False)
-    set_dynamic_ylim(ax_top,x_exp,y_exp,xlim[0],xlim[1],isRoa)
-    # Manually place the single global scale multiplier at the top-left
-    # ax_top.text(
-    #     -0.08,
-    #     1.02,
-    #     f"$\mathregular{{\\times 10^{exponent}}}$",
-    #     transform=ax_top.transAxes,
-    #     fontsize=10,
-    #     va="bottom",
-    #     ha="left",
-    # )
-
-    # --- STEP 4: Loop and Plot Calculated Wave-lengths ---
     for i, (label, filepath) in enumerate(calc_files_dict.items()):
         ax = axes[i + 1]  # Start at index 1, right under experimental
 
@@ -160,18 +121,21 @@ def plot_multi_excitation_spectra(
 if __name__ == "__main__":
     # Path to your experimental spectrum
     argc=len(sys.argv)
-    EXP_DATA = sys.argv[1]
 
     # Define your calculated spectra filenames dynamically in a dictionary.
     # The key will automatically serve as the legend string.
-    isROA=(sys.argv[2])
+    isROA=(sys.argv[1])
     if(isROA[0].lower()=='t'):
         isROA=True
     else:
         isROA=False
     print("ROA: "+str(isROA))
     CALCULATED_DATASETS = {}
-    for i in range(3,argc,2):
+    if(argc<3):
+        print("USAGE:")
+        print("plot(...).py [isRoa=t/f] [label1] [spectrum1] [label2] [spectrum2]...")
+        exit(1)
+    for i in range(2,argc,2):
         CALCULATED_DATASETS[sys.argv[i]]=sys.argv[i+1]
     
     # CALCULATED_DATASETS = {
@@ -184,4 +148,4 @@ if __name__ == "__main__":
     output='raman_wexc_stacked.png'
     xlim=[200,2000]
     # Run execution
-    plot_multi_excitation_spectra(EXP_DATA, CALCULATED_DATASETS,output,xlim,isROA)
+    plot_multi_excitation_spectra(CALCULATED_DATASETS,output,xlim,isROA)

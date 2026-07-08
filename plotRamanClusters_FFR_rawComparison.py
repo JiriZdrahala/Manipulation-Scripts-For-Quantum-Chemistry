@@ -44,24 +44,24 @@ def forward_scaled_format(x,pos):
     scaled_value = x / (10**expo)
     return f"{scaled_value:.2f}"
 
-def plot_ecd_spectra(exp_file, calc_file, ssimil1, calc_file_cluster, ssimil2,isRoa, output_image):
+def plot_ecd_spectra(calc_file, ffr_file, combined_file,isRoa, output_image):
     """Plots experimental and calculated ECD spectra vertically, sharing the X-axis."""
     xlim=[200,2000]
     # Load data
     try:
-        x_exp, y_exp = load_ecd_data(exp_file)
+        x_ffr, y_ffr = load_ecd_data(ffr_file)
         x_calc, y_calc = load_ecd_data(calc_file)
-        x_calc_cluster,y_calc_cluster=load_ecd_data(calc_file_cluster)
+        x_calc_combined,y_calc_combined=load_ecd_data(combined_file)
     except Exception as e:
         print(f"Error loading data: {e}")
         return
 
 
-    max_val = np.max(np.abs(y_exp))
+    # max_val = np.max(np.abs(y_exp))
     # Calculate the base-10 exponent (e.g., 1.5e7 -> 7)
-    exponent = int(np.floor(np.log10(max_val)))
-    global expo
-    expo=exponent
+    # exponent = int(np.floor(np.log10(max_val)))
+    # global expo
+    # expo=exponent
     # Create figure with 2 subplots stacked vertically sharing the X-axis
     fig, (ax1, ax2,ax3) = plt.subplots(
         nrows=3, ncols=1, sharex=True, figsize=(5,5),gridspec_kw={'hspace': 0}
@@ -70,71 +70,71 @@ def plot_ecd_spectra(exp_file, calc_file, ssimil1, calc_file_cluster, ssimil2,is
     for ax in [ax1, ax2, ax3]:
         ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=3, prune="both"))
         ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=6))
-        ax.yaxis.set_major_formatter(ticker.FuncFormatter(forward_scaled_format))
+        # ax.yaxis.set_major_formatter(ticker.FuncFormatter(forward_scaled_format))
         
     
     ax1.plot(
-        x_exp,
-        y_exp,
-        color="black",
+        x_ffr,
+        y_ffr,
+        color="green",
         linestyle="-",
         linewidth=1.5,
-        label="Experiment",
+        label="Only FFR",
     )
     ax1.legend(loc="upper right",fontsize=9,frameon=False)
     ax1.xaxis.grid(True, linestyle="-", alpha=0.6)
     ax1.set_xlim(xlim[0], xlim[1])
-    set_dynamic_ylim(ax1,x_exp,y_exp,xlim[0],xlim[1])
-    ax1.text(
-        -0.08,
-        1.02,
-        f"$\\mathregular{{\\times 10^{exponent}}}$",
-        transform=ax1.transAxes,
-        fontsize=10,
-        va="bottom",
-        ha="left"
-    )
+    set_dynamic_ylim(ax1,x_ffr,y_ffr,xlim[0],xlim[1])
+    # ax1.text(
+    #     -0.08,
+    #     1.02,
+    #     f"$\\mathregular{{\\times 10^{exponent}}}$",
+    #     transform=ax1.transAxes,
+    #     fontsize=10,
+    #     va="bottom",
+    #     ha="left"
+    # )
     
     
     ssimil_xpos=0.975
     ssimil_ypos=0.78
     ax2.plot(
-        x_calc, y_calc, color="blue", linestyle="-", linewidth=1.5, label="CPCM"
+        x_calc, y_calc, color="purple", linestyle="-", linewidth=1.5, label="Resonant SOS"
     )
     ax2.legend(loc="upper right",fontsize=9,frameon=False)
     ax2.xaxis.grid(True, linestyle="-", alpha=0.6)
     ax2.set_xlim(xlim[0], xlim[1])
     set_dynamic_ylim(ax2,x_calc,y_calc,xlim[0],xlim[1],isRoa)
-    ax2.text(
-        ssimil_xpos,
-        ssimil_ypos,  # X and Y coordinates (95% right, 90% up within the box)
-        ssimil1,
-        transform=ax2.transAxes,  # Use axis coordinates, not data coordinates
-        fontsize=9,
-        horizontalalignment="right",  # Anchors the text from its right edge
-        verticalalignment="top",  # Anchors the text from its top edge
-        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="none", alpha=0.7)
-    )
+    # ax2.text(
+    #     ssimil_xpos,
+    #     ssimil_ypos,  # X and Y coordinates (95% right, 90% up within the box)
+    #     ssimil1,
+    #     transform=ax2.transAxes,  # Use axis coordinates, not data coordinates
+    #     fontsize=9,
+    #     horizontalalignment="right",  # Anchors the text from its right edge
+    #     verticalalignment="top",  # Anchors the text from its top edge
+    #     bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="none", alpha=0.7)
+    # )
     
     
     ax3.plot(
-        x_calc_cluster, y_calc_cluster, color="red", linestyle="-", linewidth=1.5, label="CPCM + clusters"
+        x_calc_combined, y_calc_combined, color="red", linestyle="-", linewidth=1.5, label="Resonant SOS + FFR"
     )
     ax3.set_xlabel("Wavenumber / $\mathrm{cm^{-1}}$")
     ax3.legend(loc="upper right",fontsize=9,frameon=False)
     ax3.xaxis.grid(True, linestyle="-", alpha=0.6)
     ax3.set_xlim(xlim[0], xlim[1])
-    set_dynamic_ylim(ax3,x_calc_cluster,y_calc_cluster,xlim[0],xlim[1],isRoa)
-    ax3.text(
-        ssimil_xpos,
-        ssimil_ypos,  # X and Y coordinates (95% right, 90% up within the box)
-        ssimil2,
-        transform=ax3.transAxes,  # Use axis coordinates, not data coordinates
-        fontsize=9,
-        horizontalalignment="right",  # Anchors the text from its right edge
-        verticalalignment="top",  # Anchors the text from its top edge
-        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="none", alpha=0.7)
-    )
+    set_dynamic_ylim(ax3,x_calc_combined, y_calc_combined,xlim[0],xlim[1],isRoa)
+    # ax3.text(
+    #     ssimil_xpos,
+    #     ssimil_ypos,  # X and Y coordinates (95% right, 90% up within the box)
+    #     ssimil2,
+    #     transform=ax3.transAxes,  # Use axis coordinates, not data coordinates
+    #     fontsize=9,
+    #     horizontalalignment="right",  # Anchors the text from its right edge
+    #     verticalalignment="top",  # Anchors the text from its top edge
+    #     bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="none", alpha=0.7)
+    # )
     all_axes=[ax1,ax2,ax3]
     for ax in all_axes:
         if(isRoa):
@@ -169,19 +169,24 @@ if __name__ == "__main__":
     
     OUTPUT_FILE = "raman.png"
     argc=len(sys.argv)-1
-    EXPERIMENTAL_FILE = sys.argv[1]
-    CALCULATED_FILE = sys.argv[2]
-    SSIMIL1=(sys.argv[3])
-    CALCULATED_CLUSTER_FILE=sys.argv[4]
-    SSIMIL2=(sys.argv[5])
-    isROA=(sys.argv[6])
+    #EXPERIMENTAL_FILE=sys.argv[1]
+    if(argc!=4):
+        print("USAGE:")
+        print("plot(...).py [noFFR.PRN] [onlyFFR.PRN] [FFR.PRN] [isROA=t/f]")
+        exit(1)
+    CALCULATED_FILE = sys.argv[1]
+    FFR_FILE = sys.argv[2]
+    CALCULATED_AND_FFR_FILE=sys.argv[3]
+    isROA=(sys.argv[4])
+    
     if(isROA[0].lower()=='t'):
         isROA=True
     else:
         isROA=False
     print("ROA: "+str(isROA))
     
-    plot_ecd_spectra(EXPERIMENTAL_FILE, CALCULATED_FILE, SSIMIL1, CALCULATED_CLUSTER_FILE, SSIMIL2, isROA, OUTPUT_FILE)
+    
+    plot_ecd_spectra(CALCULATED_FILE, FFR_FILE, CALCULATED_AND_FFR_FILE, isROA, OUTPUT_FILE)
     
 
     
