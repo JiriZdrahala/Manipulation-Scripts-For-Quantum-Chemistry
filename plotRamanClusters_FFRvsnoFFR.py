@@ -20,7 +20,7 @@ def load_ecd_data(filepath):
     intensity = data[:, 1]
     return wavelength, intensity
 
-def set_dynamic_ylim(ax, x, y, x_min, x_max, isRoa=False, pad=0.025):
+def set_dynamic_ylim(ax, x, y, x_min, x_max, isRoa=False, pad=0.025, scale=1):
     
     """
     Sets y-limits based only on data within the visible x-range [x_min, x_max].
@@ -37,16 +37,16 @@ def set_dynamic_ylim(ax, x, y, x_min, x_max, isRoa=False, pad=0.025):
             y_min=-vall
             y_max=vall
         # Add padding so the peaks don't touch the top/bottom frame
-        y_range = y_max - y_min
-        ax.set_ylim(y_min - pad * y_range, y_max + pad * y_range)
+        y_range = y_max*scale - y_min
+        ax.set_ylim(y_min - pad * y_range, y_max*scale + pad * y_range)
 expo=0.0
 def forward_scaled_format(x,pos):
     scaled_value = x / (10**expo)
     return f"{scaled_value:.2f}"
 
-def plot_ecd_spectra(exp_file, ffr, ssimil_ffr,noffr,ssimil_noffr,cluster_ffr,ssimil_cluster_ffr,cluster_noffr, ssimil_cluster_noffr,isRoa, output_image):
+def plot_ecd_spectra(xmin,xmax,exp_file, ffr, ssimil_ffr,noffr,ssimil_noffr,cluster_ffr,ssimil_cluster_ffr,cluster_noffr, ssimil_cluster_noffr,isRoa, output_image):
     """Plots experimental and calculated ECD spectra vertically, sharing the X-axis."""
-    xlim=[200,2000]
+    xlim=[xmin,xmax]
     # Load data
     try:
         x_exp, y_exp = load_ecd_data(exp_file)
@@ -71,7 +71,7 @@ def plot_ecd_spectra(exp_file, ffr, ssimil_ffr,noffr,ssimil_noffr,cluster_ffr,ss
 
     for ax in [ax1, ax2, ax3]:
         ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=3, prune="both"))
-        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=6))
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(forward_scaled_format))
         
     
@@ -86,7 +86,7 @@ def plot_ecd_spectra(exp_file, ffr, ssimil_ffr,noffr,ssimil_noffr,cluster_ffr,ss
     ax1.legend(loc="upper right",fontsize=9,frameon=False)
     ax1.xaxis.grid(True, linestyle="-", alpha=0.6)
     ax1.set_xlim(xlim[0], xlim[1])
-    set_dynamic_ylim(ax1,x_exp,y_exp,xlim[0],xlim[1])
+    set_dynamic_ylim(ax1,x_exp,y_exp,xlim[0],xlim[1],isRoa=isRoa)
     ax1.text(
         -0.08,
         1.02,
@@ -101,11 +101,11 @@ def plot_ecd_spectra(exp_file, ffr, ssimil_ffr,noffr,ssimil_noffr,cluster_ffr,ss
     ssimil_xpos=0.975
     ssimil_ypos=0.78
     ax2.plot(
-        x_noffr, y_noffr, color="cyan", linestyle="-", linewidth=1.5, label="CPCM (no FFR) " + str(ssimil_noffr),alpha=alpha_noFFR
+        x_noffr, y_noffr, color="cyan", linestyle="-", linewidth=2, label="CPCM (no FFR) " + str(ssimil_noffr),alpha=alpha_noFFR
     )
 
     ax2.plot(
-        x_ffr, y_ffr, color="blue", linestyle="-", linewidth=1.5, label="CPCM (FFR) "  + str(ssimil_ffr)
+        x_ffr, y_ffr, color="blue", linestyle="-", linewidth=0.8, label="CPCM (FFR) "  + str(ssimil_ffr)
     )
     ax2.legend(loc="upper right",fontsize=9,frameon=False)
     ax2.xaxis.grid(True, linestyle="-", alpha=0.6)
@@ -124,10 +124,10 @@ def plot_ecd_spectra(exp_file, ffr, ssimil_ffr,noffr,ssimil_noffr,cluster_ffr,ss
     # )
     
     ax3.plot(
-        x_noffr_cluster, y_noffr_cluster, color="lightsalmon", linestyle="-", linewidth=1.5, label="CPCM + clusters (no FFR) " + str(ssimil_cluster_noffr) , alpha=alpha_noFFR
+        x_noffr_cluster, y_noffr_cluster, color="lightsalmon", linestyle="-", linewidth=2, label="CPCM + clusters (no FFR) " + str(ssimil_cluster_noffr) , alpha=alpha_noFFR
     )
     ax3.plot(
-        x_ffr_cluster, y_ffr_cluster, color="red", linestyle="-", linewidth=1.5, label="CPCM + clusters (FFR) " + str(ssimil_cluster_ffr)
+        x_ffr_cluster, y_ffr_cluster, color="red", linestyle="-", linewidth=0.8, label="CPCM + clusters (FFR) " + str(ssimil_cluster_ffr)
     )
     ax3.set_xlabel("Wavenumber / $\mathrm{cm^{-1}}$")
     ax3.legend(loc="upper right",fontsize=9,frameon=False)
@@ -159,7 +159,7 @@ def plot_ecd_spectra(exp_file, ffr, ssimil_ffr,noffr,ssimil_noffr,cluster_ffr,ss
     ax3.yaxis.get_offset_text().set_visible(False)
 
     plt.subplots_adjust(top=0.93, bottom=0.12, left=0.18, right=0.95)
-    plt.savefig(output_image, dpi=300, format="png")
+    plt.savefig(output_image, format="svg")
     print(f"Successfully generated plot: {output_image}")
     plt.close()
 
@@ -167,25 +167,28 @@ def plot_ecd_spectra(exp_file, ffr, ssimil_ffr,noffr,ssimil_noffr,cluster_ffr,ss
 if __name__ == "__main__":
     # Define your file paths here
     
-    OUTPUT_FILE = "raman.png"
+    OUTPUT_FILE = "raman.svg"
     argc=len(sys.argv)-1
-    if(argc!=10):
+    if(argc!=12):
         print("USAGE:")
-        print("plot(...).py [EXP.PRN] [FFR.PRN] [SSIMIL FFR] [noFFR.PRN] [SSIMIL noFFR] [FFR_clusters.PRN] [SSIMIL FFR clusters] [noFFR_clusters.PRN] [SSIMIL noFFR clusters] [isROA=t/f]")
+        print("plot(...).py [xmin] [xmax] [EXP.PRN] [FFR.PRN] [SSIMIL FFR] [noFFR.PRN] [SSIMIL noFFR] [FFR_clusters.PRN] [SSIMIL FFR clusters] [noFFR_clusters.PRN] [SSIMIL noFFR clusters] [isROA=t/f]")
         exit(1)
         
-    EXPERIMENTAL_FILE = sys.argv[1]
-    CALCULATED_FILE_FFR = sys.argv[2]
-    SSIMIL_FFR=(sys.argv[3])
-    CALCULATED_FILE_noFFR = sys.argv[4]
-    SSIMIL_noFFR=(sys.argv[5])
+        
+    xmin=float(sys.argv[1])
+    xmax=float(sys.argv[2])
+    EXPERIMENTAL_FILE = sys.argv[3]
+    CALCULATED_FILE_FFR = sys.argv[4]
+    SSIMIL_FFR=(sys.argv[5])
+    CALCULATED_FILE_noFFR = sys.argv[6]
+    SSIMIL_noFFR=(sys.argv[7])
     
-    CALCULATED_CLUSTER_FILE_FFR=sys.argv[6]
-    SSIMIL_CLUSTER_FFR=(sys.argv[7])
-    CALCULATED_CLUSTER_FILE_noFFR=sys.argv[8]
-    SSIMIL_CLUSTER_noFFR=(sys.argv[9])
+    CALCULATED_CLUSTER_FILE_FFR=sys.argv[8]
+    SSIMIL_CLUSTER_FFR=(sys.argv[9])
+    CALCULATED_CLUSTER_FILE_noFFR=sys.argv[10]
+    SSIMIL_CLUSTER_noFFR=(sys.argv[11])
     
-    isROA=(sys.argv[10])
+    isROA=(sys.argv[12])
     
     if(isROA[0].lower()=='t'):
         isROA=True
@@ -193,7 +196,7 @@ if __name__ == "__main__":
         isROA=False
     print("ROA: "+str(isROA))
     
-    plot_ecd_spectra(EXPERIMENTAL_FILE, CALCULATED_FILE_FFR, SSIMIL_FFR, CALCULATED_FILE_noFFR, SSIMIL_noFFR,CALCULATED_CLUSTER_FILE_FFR,SSIMIL_CLUSTER_FFR,CALCULATED_CLUSTER_FILE_noFFR,SSIMIL_CLUSTER_noFFR,isROA, OUTPUT_FILE)
+    plot_ecd_spectra(xmin,xmax,EXPERIMENTAL_FILE, CALCULATED_FILE_FFR, SSIMIL_FFR, CALCULATED_FILE_noFFR, SSIMIL_noFFR,CALCULATED_CLUSTER_FILE_FFR,SSIMIL_CLUSTER_FFR,CALCULATED_CLUSTER_FILE_noFFR,SSIMIL_CLUSTER_noFFR,isROA, OUTPUT_FILE)
     
 
     

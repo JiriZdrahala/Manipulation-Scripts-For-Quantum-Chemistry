@@ -31,7 +31,38 @@ def set_dynamic_ylim(ax, x, y, x_min, x_max, isRoa=False, pad=0.025):
             y_max=vall
         # Add padding so the peaks don't touch the top/bottom frame
         y_range = y_max - y_min
-        ax.set_ylim(y_min - pad * y_range, y_max + pad * y_range)
+        bot=y_min - pad * y_range
+        top=y_max + pad * y_range
+        ax.set_ylim(bot, top)
+        return (bot,top)
+
+def adaptive_y_format(x, pos):
+    if x == 0:
+        return "0"
+        
+    abs_x = abs(x)
+    
+    # 1. Decimal format for values strictly between -1 and 1
+    if abs_x < 1:
+        return f"{x:.1f}"
+        
+    # 2. Integer format for values up to the hardcoded limit
+    elif abs_x < 1e5:
+        return f"{int(x)}"
+        
+    # 3. Scientific notation (e.g., 5e+7) for large values
+    else:
+        # Get standard Python scientific notation (e.g., '5.000000e+07')
+        mantissa, exponent = f"{x:e}".split('e')
+        
+        # Strip redundant trailing zeros and decimal points from the mantissa
+        clean_mantissa = mantissa.rstrip('0').rstrip('.')
+        
+        # Convert Python's default '+07' exponent padding into a cleaner '+7'
+        exp_sign = exponent[0]
+        exp_num = int(exponent[1:]) 
+        
+        return f"{clean_mantissa}e{exp_sign}{exp_num}"
 
 def plot_multi_excitation_spectra(
      calc_files_dict, output_image="multi_spectra_stack.png",xlim=[200,2000],isRoa=False
@@ -52,7 +83,7 @@ def plot_multi_excitation_spectra(
 
     # Dynamically scale the figure height based on the number of files
     # 5 inches wide, 2 inches of height per stacked spectrum feels balanced
-    fig_height = 1*num_calc
+    fig_height = 1.5*num_calc
 
     fig, axes = plt.subplots(
         nrows=total_plots,
@@ -67,7 +98,7 @@ def plot_multi_excitation_spectra(
         axes = [axes]
 
     for i, (label, filepath) in enumerate(calc_files_dict.items()):
-        ax = axes[i + 1]  # Start at index 1, right under experimental
+        ax = axes[i]  # Start at index 1, right under experimental
 
         try:
             x_calc, y_calc = load_spectrum_data(filepath)
@@ -90,17 +121,39 @@ def plot_multi_excitation_spectra(
         )
         # ax.set_ylabel(r"$\mathit{I}$ (arb. u.)", style="italic")
         ax.legend(loc="upper right", fontsize=9, frameon=False)
-        set_dynamic_ylim(ax,x_calc,y_calc,xlim[0],xlim[1],isRoa)
+        (y_min,y_max)=set_dynamic_ylim(ax,x_calc,y_calc,xlim[0],xlim[1],isRoa)
+        # --- Inside your plotting loop for EACH spectrum ---
+        
+        # 1. Find the absolute maximum value to ensure a symmetric Y-axis
+        #y_max = np.max(np.abs(y_calc))
+        
+        # 2. Set symmetric limits with a 15% buffer so peaks don't clip the top/bottom
+        limit = y_max * 1.15
+        if(isRoa):
+            ax.set_ylim(-limit, limit)
+        else:
+            ax.set_ylim(0, limit)
+        
+        # 3. Explicitly define the major ticks at 0, and 30% up/down from the 0 line
+        # Note: If 30% looks too cramped near the 0 line, increase 0.30 to 0.50 or 0.60
+        tick_offset = y_max*0.7
+        if(isROA):
+            ax.set_yticks([-tick_offset, 0, tick_offset])
+        else:
+            if(tick_offset>1):
+                tick_offset=round(tick_offset*1.1,-1)
+            ax.set_yticks([0, tick_offset])
+        ax.set_xticks([300,600,900,1200,1500,1800])
 
     # --- STEP 5: Apply Unified Formatting across ALL subplots ---
     for ax in axes:
         
         # Fewer numbers on Y axis to maintain clean whitespace
-        ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=2, prune="both"))
-       # ax.yaxis.set_major_formatter(ticker.FuncFormatter(forward_scaled_format))
+       # ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=2, prune="both"))
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(adaptive_y_format))
 
         # Add dense X grid lines, turn off Y grid lines completely
-        ax.xaxis.set_minor_locator(ticker.AutoMinorLocator(2))
+        ax.xaxis.set_minor_locator(ticker.AutoMinorLocator(3))
         ax.xaxis.grid(True, which="both", linestyle=":", alpha=0.25, color="gray")
         ax.yaxis.grid(False)
 
@@ -108,8 +161,8 @@ def plot_multi_excitation_spectra(
     ax_bottom = axes[-1]
     ax_bottom.set_xlabel("Wavenumber ($\mathrm{cm}^{-1}$)")
     ax_bottom.set_xlim(150, 2000)  # Adjust to your physical range constraints
-
     # Optimize edge limits tightly
+    
     plt.subplots_adjust(top=0.93, bottom=0.12, left=0.18, right=0.95)
 
     # Save to high-quality compressed PNG
